@@ -1,5 +1,5 @@
 -- 2-fans.sql
--- Write a SQL script that ranks country origins of bands, ordered by the number of (non-unique) fans
+-- Write a SQL script that ranks country origins of bands
 SELECT origin, SUM(nb_fans) AS nb_fans
 FROM metal_bands
 GROUP BY origin

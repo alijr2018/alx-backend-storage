@@ -2,7 +2,7 @@
 -- Write a SQL script that lists all bands with Glam rock as their main style, ranked by their longevity
 SELECT
     band_name,
-    IF(formed > 0, IF(split > 0, split - formed, YEAR(CURDATE()) - formed), 0) AS lifespan
+    (IFNULL(split, 2022) - formed) AS lifespan
 FROM
     metal_bands
 WHERE

@@ -23,7 +23,7 @@ BEGIN
             LEAVE users_loop;
         END IF;
         
-        SELECT SUM(c.score ** p.weight), SUM(p.weight)
+        SELECT SUM(c.score * p.weight), SUM(p.weight)
         INTO total_score, total_weight
         FROM corrections c
         JOIN projects p ON c.project_id = p.id

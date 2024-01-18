@@ -19,6 +19,10 @@ BEGIN
     users_loop: LOOP
         FETCH user_cursor INTO user_id_param;
         
+        IF done THEN
+            LEAVE users_loop;
+        END IF;
+        
         SELECT SUM(c.score ** p.weight), SUM(p.weight)
         INTO total_score, total_weight
         FROM corrections c

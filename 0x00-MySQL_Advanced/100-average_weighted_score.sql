@@ -1,5 +1,4 @@
 -- 100-average_weighted_score.sql
-
 -- Write a SQL script that creates a stored procedure ComputeAverageWeightedScoreForUser that computes and store the average weighted score for a student.
 DELIMITER //
 CREATE PROCEDURE ComputeAverageWeightedScoreForUser(IN user_id_param INT)

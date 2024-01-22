@@ -1,0 +1,10 @@
+// 0-list_databases
+
+var conn = new Mongo();
+var adminDb = conn.getDB("admin");
+
+var database = adminDB.runCommand({ listDatabases: 1 });
+
+databases.databases.forEach(function(db) {
+    print(db.name + "\t" + db.sizeOnDisk);
+});

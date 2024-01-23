@@ -22,19 +22,19 @@ def log_stats():
 
     status_check_count = collection.count_documents({"method": "GET", "path": "/status"})
 
-    top = list(collection.aggregate([
+    top_ips = list(collection.aggregate([
         {"$group": {"_id": "$ip", "count": {"$sum": 1}}},
         {"$sort": {"count": -1}},
         {"$limit": 10}
-        ]))
+    ]))
 
     print(f"{total_logs} logs")
     print("Methods:")
     for method in methods:
         print(f"\tmethod {method}: {methods_counts[method]}")
-    print(f"{status_check_count} status check")
+    print(f"{status_check_count} status checks")
     print("IPs:")
-    for ip_info in top:
+    for ip_info in top_ips:
         print(f"\t{ip_info['_id']}: {ip_info['count']}")
 
 if __name__ == "__main__":

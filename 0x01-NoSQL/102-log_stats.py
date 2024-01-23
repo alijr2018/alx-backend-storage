@@ -18,15 +18,19 @@ def log_stats():
     total_logs = collection.count_documents({})
 
     methods = ["GET", "POST", "PUT", "PATCH", "DELETE"]
-    methods_counts = {method: collection.count_documents({"method": method.lower()}) for method in methods}
+    methods_counts = {
+        method: collection.count_documents(
+            {"method": method.lower()}) for method in methods}
 
-    status_check_count = collection.count_documents({"method": "GET", "path": "/status"})
+    status_check_count = collection.count_documents(
+        {"method": "GET", "path": "/status"})
 
     print(f"{total_logs} logs")
     print("Methods:")
     for method in methods:
         print(f"\tmethod {method}: {methods_counts[method]}")
     print(f"{status_check_count} status check")
+
 
 if __name__ == "__main__":
     log_stats()

@@ -10,45 +10,45 @@ from typing import Any, Callable, Union
 
 def count_calls(method: Callable) -> Callable:
     @wraps(method)
-    def invokers(self, *args, **kwargs) -> Any:
+    def invoker(self, *args, **kwargs) -> Any:
         if isinstance(self._redis, redis.Redis):
             self._redis.incr(method.__qualname__)
         return method(self, *args, **kwargs)
-    return invokers
+    return invoker
 
 
 def call_history(method: Callable) -> Callable:
     @wraps(method)
-    def invokers(self, *args, **kwargs) -> Any:
-        i_k = '{}:inputs'.format(method.__qualname__)
-        o_k = '{}:outputs'.format(method.__qualname__)
+    def invoker(self, *args, **kwargs) -> Any:
+        in_key = '{}:inputs'.format(method.__qualname__)
+        out_key = '{}:outputs'.format(method.__qualname__)
         if isinstance(self._redis, redis.Redis):
-            self._redis.rpush(i_k, str(args))
+            self._redis.rpush(in_key, str(args))
         output = method(self, *args, **kwargs)
         if isinstance(self._redis, redis.Redis):
-            self._redis.rpush(o_k, output)
+            self._redis.rpush(out_key, output)
         return output
-    return invokers
+    return invoker
 
 
-def replay(y: Callable) -> None:
-    if y is None or not hasattr(y, '__self__'):
+def replay(fn: Callable) -> None:
+    if fn is None or not hasattr(fn, '__self__'):
         return
-    redis_stores = getattr(y.__self__, '_redis', None)
-    if not isinstance(redis_stores, redis.Redis):
+    redis_store = getattr(fn.__self__, '_redis', None)
+    if not isinstance(redis_store, redis.Redis):
         return
-    fix = y.__qualname__
-    i_k = '{}:inputs'.format(fix)
-    o_k = '{}:outputs'.format(fix)
-    count = 0
-    if redis_stores.exists(fix) != 0:
-        count = int(redis_stores.get(fix))
-    print('{} was called {} times:'.format(fix, count))
-    fix_in = redis_stores.lrange(i_k, 0, -1)
-    fix_out = redis_stores.lrange(o_k, 0, -1)
-    for fxn_input, fxn_output in zip(fix_in, fix_out):
+    fxn_name = fn.__qualname__
+    in_key = '{}:inputs'.format(fxn_name)
+    out_key = '{}:outputs'.format(fxn_name)
+    fxn_call_count = 0
+    if redis_store.exists(fxn_name) != 0:
+        fxn_call_count = int(redis_store.get(fxn_name))
+    print('{} was called {} times:'.format(fxn_name, fxn_call_count))
+    fxn_inputs = redis_store.lrange(in_key, 0, -1)
+    fxn_outputs = redis_store.lrange(out_key, 0, -1)
+    for fxn_input, fxn_output in zip(fxn_inputs, fxn_outputs):
         print('{}(*{}) -> {}'.format(
-            fix,
+            fxn_name,
             fxn_input.decode("utf-8"),
             fxn_output,
         ))
@@ -67,13 +67,15 @@ class Cache:
         return data_key
 
     def get(
-            self, key: str, y: Callable = None,
+            self,
+            key: str,
+            fn: Callable = None,
             ) -> Union[str, bytes, int, float]:
         data = self._redis.get(key)
-        return y(data) if y is not None else data
+        return fn(data) if fn is not None else data
 
     def get_str(self, key: str) -> str:
-        return self.get(key, lambda z: z.decode('utf-8'))
+        return self.get(key, lambda x: x.decode('utf-8'))
 
     def get_int(self, key: str) -> int:
-        return self.get(key, lambda z: int(z))
+        return self.get(key, lambda x: int(x))

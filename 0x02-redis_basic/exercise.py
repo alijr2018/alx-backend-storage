@@ -4,7 +4,7 @@ exercise.py
 """
 import redis
 import uuid
-from typing import Union
+from typing import Callable, Union
 
 
 class Cache:
@@ -25,8 +25,7 @@ class Cache:
 
     def get_str(self, key: str) -> Union[str, None]:
         return self.get(
-            key, fn=lambda d: d.decode("utf-8") if d is not None else None
-            )
+            key, fn=lambda d: d.decode("utf-8") if d is not None else None)
 
     def get_int(self, key: str) -> Union[int, None]:
         return self.get(key, fn=lambda d: int(d) if d is not None else None)
@@ -35,9 +34,12 @@ class Cache:
 if __name__ == "__main__":
     cache = Cache()
 
-    data = b"hello"
-    key = cache.store(data)
-    print(key)
+    TEST_CASES = {
+        b"foo": None,
+        123: int,
+        "bar": lambda d: d.decode("utf-8")
+    }
 
-    local_redis = redis.Redis()
-    print(local_redis.get(key))
+    for value, fn in TEST_CASES.items():
+        key = cache.store(value)
+        assert cache.get(key, fn=fn) == value

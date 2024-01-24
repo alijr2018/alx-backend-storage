@@ -7,7 +7,6 @@ import uuid
 from typing import Callable, Union
 from functools import wraps
 
-
 class Cache:
     def __init__(self):
         self._redis = redis.Redis()
@@ -37,12 +36,10 @@ class Cache:
         return value
 
     def get_str(self, key: str) -> Union[str, None]:
-        return self.get(
-            key, fn=lambda d: d.decode("utf-8") if d is not None else None)
+        return self.get(key, fn=lambda d: d.decode("utf-8") if d is not None else None)
 
     def get_int(self, key: str) -> Union[int, None]:
         return self.get(key, fn=lambda d: int(d) if d is not None else None)
-
 
 if __name__ == "__main__":
     cache = Cache()

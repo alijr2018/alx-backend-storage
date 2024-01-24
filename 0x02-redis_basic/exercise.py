@@ -3,50 +3,38 @@
 exercise.py
 """
 import redis
-import uuid
-from typing import Callable, Union
 from functools import wraps
+from typing import Any, Callable, Union
+
+def count_calls(method: Callable) -> Callable:
+    @wraps(method)
+    def invoker(self, *args, **kwargs) -> Any:
+        if isinstance(self._redis, redis.Redis):
+            self._redis.incr(method.__qualname__)
+        return method(self, *args, **kwargs)
+    return invoker
 
 class Cache:
-    def __init__(self):
+    def __init__(self) -> None:
         self._redis = redis.Redis()
-        self._redis.flushdb()
-
-    @staticmethod
-    def count_calls(method: Callable) -> Callable:
-        key = method.__qualname__
-
-        @wraps(method)
-        def wrapper(self, *args, **kwargs):
-            self._redis.incr(key)
-            return method(self, *args, **kwargs)
-
-        return wrapper
+        self._redis.flushdb(True)
 
     @count_calls
     def store(self, data: Union[str, bytes, int, float]) -> str:
-        key = str(uuid.uuid4())
-        self._redis.set(key, data)
-        return key
+        data_key = str(uuid.uuid4())
+        self._redis.set(data_key, data)
+        return data_key
 
-    def get(self, key: str, fn: Callable = None) -> Union[str, bytes, int, None]:
-        value = self._redis.get(key)
-        if value is not None and fn is not None:
-            return fn(value)
-        return value
+    def get(
+            self,
+            key: str,
+            fn: Callable = None,
+            ) -> Union[str, bytes, int, float]:
+        data = self._redis.get(key)
+        return fn(data) if fn is not None else data
 
-    def get_str(self, key: str) -> Union[str, None]:
-        return self.get(key, fn=lambda d: d.decode("utf-8") if d is not None else None)
+    def get_str(self, key: str) -> str:
+        return self.get(key, lambda x: x.decode('utf-8'))
 
-    def get_int(self, key: str) -> Union[int, None]:
-        return self.get(key, fn=lambda d: int(d) if d is not None else None)
-
-if __name__ == "__main__":
-    cache = Cache()
-
-    cache.store(b"first")
-    print(cache.get(cache.store.__qualname__))
-
-    cache.store(b"second")
-    cache.store(b"third")
-    print(cache.get(cache.store.__qualname__))
+    def get_int(self, key: str) -> int:
+        return self.get(key, lambda x: int(x))

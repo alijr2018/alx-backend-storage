@@ -9,14 +9,14 @@ from typing import Any, Callable, Union
 
 
 def count_calls(method: Callable) -> Callable:
-    '''
+    """
     Keeps track of the number of calls made to a method in a Cache class.
-    '''
+    """
     @wraps(method)
     def invoker(self, *args, **kwargs) -> Any:
-        '''
+        """
         Invokes the specified method after increasing its call counter.
-        '''
+        """
         if isinstance(self._redis, redis.Redis):
             self._redis.incr(method.__qualname__)
         return method(self, *args, **kwargs)
@@ -24,15 +24,15 @@ def count_calls(method: Callable) -> Callable:
 
 
 def call_history(method: Callable) -> Callable:
-    '''
+    """
     Monitors the call details of a method in a Cache class.
-    '''
+    """
     @wraps(method)
     def invoker(self, *args, **kwargs) -> Any:
-        '''
+        """
         Returns the output of the method after,
         recording both its inputs and output.
-        '''
+        """
         in_key = '{}:inputs'.format(method.__qualname__)
         out_key = '{}:outputs'.format(method.__qualname__)
         if isinstance(self._redis, redis.Redis):
@@ -45,9 +45,9 @@ def call_history(method: Callable) -> Callable:
 
 
 def replay(fn: Callable) -> None:
-    '''
+    """
     Shows the call history of a method within the Cache class.
-    '''
+    """
     if fn is None or not hasattr(fn, '__self__'):
         return
     redis_store = getattr(fn.__self__, '_redis', None)
@@ -71,42 +71,42 @@ def replay(fn: Callable) -> None:
 
 
 class Cache:
-    '''
+    """
     Represents an entity for storing data in a Redis data storage.
-    '''
+    """
     def __init__(self) -> None:
-        '''
+        """
         Creates a new instance of the Cache class.
-        '''
+        """
         self._redis = redis.Redis()
         self._redis.flushdb(True)
 
     @call_history
     @count_calls
     def store(self, data: Union[str, bytes, int, float]) -> str:
-        '''
+        """
         Saves a value in Redis storage and provides the corresponding key.
-        '''
+        """
         data_key = str(uuid.uuid4())
         self._redis.set(data_key, data)
         return data_key
 
     def get(self, key: str, fn: Callable = None,
             ) -> Union[str, bytes, int, float]:
-        '''
+        """
         Fetches a value from Redis storage.
-        '''
+        """
         data = self._redis.get(key)
         return fn(data) if fn is not None else data
 
     def get_str(self, key: str) -> str:
-        '''
+        """
         Gets a string value from Redis storage.
-        '''
+        """
         return self.get(key, lambda x: x.decode('utf-8'))
 
     def get_int(self, key: str) -> int:
-        '''
+        """
         Gets an integer value from a Redis data store.
-        '''
+        """
         return self.get(key, lambda x: int(x))

@@ -35,6 +35,12 @@ class Cache:
 if __name__ == "__main__":
     cache = Cache()
 
+    data = b"hello"
+    key = cache.store(data)
+    print(key)
+
+    local_redis = redis.Redis()
+    print(local_redis.get(key))
 TEST_CASES = {
     b"foo": None,
     123: int,
